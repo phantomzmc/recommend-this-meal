@@ -1,4 +1,5 @@
 import { IResponseGeminiObjectNameInPicture } from "@/types/response/gemini-object-name-in-picture";
+import { parseCodeBlockJson } from "@/utils/parser";
 import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -34,6 +35,33 @@ export const geminiGetNameObjectInPicture = async (file: File): Promise<IRespons
     en: res[0].replace("en:", "").trim(),
     th: res[1].replace("th:", "").trim(),
   };
+};
+
+export const geminiGetDataInPictureByPrompt = async (file: File, prompt: string): Promise<string>  => {
+  const buffer = await file.arrayBuffer();
+  const imageBase64 = Buffer.from(buffer).toString("base64");
+  const contents = [
+    {
+      inlineData: {
+        mimeType: "image/jpeg",
+        data: imageBase64,
+      },
+    },
+    {
+      text: prompt,
+    },
+  ];
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: contents,
+  });
+  console.log(response.text);
+  const message = response.text;
+  console.log("🚀 ~ geminiGetNameObjectInPicture ~ response:", parseCodeBlockJson(message ?? ''));
+  if (!message) {
+    throw new Error("No content in response message");
+  }
+  return parseCodeBlockJson(message)
 };
 
 export const geminiGetItemInReceipt = async (file: File) => {
